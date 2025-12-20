@@ -12,6 +12,9 @@ import 'features/recipe/domain/recipe_provider.dart';
 
 // FR4: Kế hoạch & Mua sắm
 import 'features/planner/presentation/screens/planner_screen.dart';
+import 'package:bepthongminh64pm1duchoang/features/pantry/domain/pantry_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/recipe/domain/recipe_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/planner/domain/planner_provider.dart';
 
 // Module Hồ sơ (Placeholder)
 import 'features/profile/presentation/screens/profile_screen.dart';
@@ -26,6 +29,9 @@ void main() {
         ChangeNotifierProvider(create: (_) => PantryProvider()),
         ChangeNotifierProvider(create: (_) => RecipeProvider()),
         // Thêm PlannerProvider, ShoppingListProvider sau này
+        ChangeNotifierProvider(create: (_) => PantryProvider()),
+        ChangeNotifierProvider(create: (_) => RecipeProvider()),
+        ChangeNotifierProvider(create: (_) => PlannerProvider()),
       ],
       child: const KitchenAssistantApp(),
     ),

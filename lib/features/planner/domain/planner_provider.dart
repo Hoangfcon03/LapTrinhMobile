@@ -1,29 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:bepthongminh64pm1duchoang/features/recipe/domain/recipe_model.dart';
-import 'planner_model.dart';
+import 'package:bepthongminh64pm1duchoang/features/planner/domain/planner_model.dart';
 
 class PlannerProvider with ChangeNotifier {
-  // Lưu trữ kế hoạch theo ngày
   final List<MealPlan> _mealPlans = [];
 
   List<MealPlan> get mealPlans => _mealPlans;
 
-  // Lên kế hoạch cho một ngày
   void addRecipeToPlan(DateTime date, Recipe recipe) {
-    // Tìm xem ngày đó đã có kế hoạch chưa
+    // Chuẩn hóa chỉ lấy ngày/tháng/năm để tránh lệch giờ
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
     final existingPlanIndex = _mealPlans.indexWhere(
-            (plan) => plan.date.day == date.day && plan.date.month == date.month
+            (plan) => plan.date.year == dateOnly.year &&
+            plan.date.month == dateOnly.month &&
+            plan.date.day == dateOnly.day
     );
 
     if (existingPlanIndex != -1) {
+      // Nếu ngày này đã có trong lịch, thêm món mới vào list
       _mealPlans[existingPlanIndex].recipes.add(recipe);
     } else {
-      _mealPlans.add(MealPlan(date: date, recipes: [recipe]));
+      // Nếu chưa có, tạo mới một MealPlan cho ngày đó
+      _mealPlans.add(MealPlan(date: dateOnly, recipes: [recipe]));
     }
-    notifyListeners();
+
+    // Sắp xếp lịch trình theo thời gian tăng dần
+    _mealPlans.sort((a, b) => a.date.compareTo(b.date));
+
+    notifyListeners(); // Bắt buộc để cập nhật giao diện
   }
 
-  // --- FR4.2: Tự động tổng hợp Danh sách mua sắm ---
   List<String> get shoppingList {
     final List<String> items = [];
     for (var plan in _mealPlans) {
@@ -31,6 +38,6 @@ class PlannerProvider with ChangeNotifier {
         items.addAll(recipe.missingIngredients);
       }
     }
-    return items.toSet().toList(); // Loại bỏ trùng lặp
+    return items.toSet().toList();
   }
 }
