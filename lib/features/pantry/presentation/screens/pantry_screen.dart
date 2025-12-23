@@ -1,44 +1,27 @@
-//Tủ nguyên liệu Ảo
-
+//Tủ nguyên liệu ảo
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// Import Providers và Models
-import '../../domain/pantry_provider.dart';
-import '../../data/pantry_data.dart'; // Chứa class Ingredient
+import 'package:bepthongminh64pm1duchoang/features/pantry/domain/pantry_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/pantry/data/pantry_data.dart';
 
 class PantryScreen extends StatelessWidget {
   const PantryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Sử dụng Consumer để lắng nghe PantryProvider
     return Consumer<PantryProvider>(
       builder: (context, pantryProvider, child) {
-        final List<Ingredient> ingredients = pantryProvider.ingredients;
-        final List<Ingredient> expiringItems = pantryProvider.expiringIngredients;
-
-        // Nhóm nguyên liệu theo thể loại
+        final ingredients = pantryProvider.ingredients;
+        final expiringItems = pantryProvider.expiringIngredients;
         final groupedItems = _groupIngredientsByCategory(ingredients);
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Kho Nguyên liệu Ảo'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () { /* Xử lý tìm kiếm */ },
-              ),
-            ],
-          ),
+          appBar: AppBar(title: const Text('Kho Nguyên liệu Ảo')),
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              // Thêm logic: Mở dialog/màn hình để nhập dữ liệu
-              _showAddIngredientDialog(context, pantryProvider);
-            },
+            onPressed: () => _showAddIngredientDialog(context, pantryProvider),
             label: const Text('Thêm Nguyên liệu'),
             icon: const Icon(Icons.add),
-            backgroundColor: Theme.of(context).primaryColor,
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           body: SingleChildScrollView(
@@ -46,24 +29,23 @@ class PantryScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Cảnh báo Hết hạn (FR3) ---
+                // Hiển thị Cảnh báo nếu có đồ sắp hết hạn
                 if (expiringItems.isNotEmpty)
                   _buildExpiryAlert(context, expiringItems),
 
                 const SizedBox(height: 20),
-
-                // --- Danh sách Nguyên liệu (FR1) ---
                 Text(
                   'Nguyên liệu Hiện có (${ingredients.length})',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
 
-                // Hiển thị danh sách nguyên liệu đã nhóm
                 if (ingredients.isEmpty)
-                  _buildEmptyPantryState()
+                  _buildEmptyState()
                 else
                   ..._buildIngredientList(context, groupedItems, pantryProvider),
+
+                const SizedBox(height: 80), // Tạo khoảng trống cho FAB
               ],
             ),
           ),
@@ -72,186 +54,104 @@ class PantryScreen extends StatelessWidget {
     );
   }
 
-  // Method nhóm nguyên liệu
-  Map<String, List<Ingredient>> _groupIngredientsByCategory(List<Ingredient> items) {
-    return items.fold<Map<String, List<Ingredient>>>({}, (map, ingredient) {
-      if (!map.containsKey(ingredient.category)) {
-        map[ingredient.category] = [];
-      }
-      map[ingredient.category]!.add(ingredient);
-      return map;
-    });
-  }
-
-  // Widget hiển thị khi kho rỗng
-  Widget _buildEmptyPantryState() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.only(top: 80.0),
-        child: Column(
-          children: [
-            Icon(Icons.kitchen_outlined, size: 80, color: Colors.grey),
-            SizedBox(height: 10),
-            Text('Tủ lạnh ảo của bạn trống trơn!', style: TextStyle(fontSize: 18, color: Colors.grey)),
-            Text('Hãy thêm nguyên liệu đầu tiên.', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-
+  // --- WIDGET CẢNH BÁO ---
   Widget _buildExpiryAlert(BuildContext context, List<Ingredient> items) {
-    // ... (Giữ nguyên logic hiển thị cảnh báo từ code trước)
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).hintColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Theme.of(context).hintColor.withOpacity(0.5)),
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade300),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Theme.of(context).hintColor),
+              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
               const SizedBox(width: 8),
-              Text(
-                'Thực phẩm Sắp hết hạn (${items.length})',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).hintColor,
-                ),
-              ),
+              Text('Sắp hết hạn (${items.length})',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
             ],
           ),
-          const SizedBox(height: 8),
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('• ${item.name} (${item.quantity})'),
-                Text(
-                  'Hết hạn sau ${item.expiryDate.difference(DateTime.now()).inDays} ngày',
-                  style: TextStyle(
-                      color: item.expiryDate.difference(DateTime.now()).inDays <= 1 ? Colors.red : Theme.of(context).hintColor,
-                      fontWeight: FontWeight.bold
-                  ),
-                ),
-              ],
-            ),
+          ...items.map((item) => ListTile(
+            dense: true,
+            title: Text(item.name),
+            subtitle: Text('Còn lại ${item.expiryDate.difference(DateTime.now()).inDays} ngày'),
           )).toList(),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              icon: const Icon(Icons.restaurant),
-              label: const Text('Gợi ý Công thức Ngay!'),
-              onPressed: () {
-                // Điều hướng đến tab Công thức (cần logic MainLayoutScreen)
-              },
-            ),
-          )
         ],
       ),
     );
   }
 
-  List<Widget> _buildIngredientList(BuildContext context, Map<String, List<Ingredient>> groupedItems, PantryProvider provider) {
-    return groupedItems.entries.map((entry) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  // --- DIALOG THÊM NGUYÊN LIỆU (ĐÃ SỬA LỖI ID) ---
+  void _showAddIngredientDialog(BuildContext context, PantryProvider provider) {
+    final nameController = TextEditingController();
+    final qtyController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thêm mới'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              entry.key,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4CAF50)),
-            ),
-            const Divider(),
-            ...entry.value.map((item) => _buildIngredientTile(context, item, provider)).toList(),
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên')),
+            TextField(controller: qtyController, decoration: const InputDecoration(labelText: 'Số lượng')),
           ],
         ),
-      );
-    }).toList();
-  }
-
-  Widget _buildIngredientTile(BuildContext context, Ingredient item, PantryProvider provider) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: ListTile(
-        leading: const Icon(Icons.check_box_outline_blank, color: Colors.grey),
-        title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-        subtitle: Text('HSD: ${item.expiryDate.day}/${item.expiryDate.month} | ${item.quantity}'),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-          onPressed: () {
-            // Logic xóa/dùng hết (FR1.3)
-            provider.removeIngredient(item);
-          },
-        ),
-        onTap: () {
-          // Mở chi tiết/chỉnh sửa
-        },
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty) {
+                provider.addIngredient(Ingredient(
+                  // SỬA LỖI: Tạo ID bằng timestamp
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: nameController.text,
+                  quantity: qtyController.text,
+                  expiryDate: DateTime.now().add(const Duration(days: 5)),
+                  category: 'Thực phẩm mới',
+                ));
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Thêm'),
+          ),
+        ],
       ),
     );
   }
 
-  // Dialog thêm nguyên liệu (FR1.1)
-  void _showAddIngredientDialog(BuildContext context, PantryProvider provider) {
-    // Đây là placeholder đơn giản cho việc thêm thủ công
-    showDialog(
-        context: context,
-        builder: (ctx) {
-          String name = '';
-          String quantity = '';
-          DateTime expiryDate = DateTime.now().add(const Duration(days: 7));
-
-          return AlertDialog(
-            title: const Text('Thêm Nguyên liệu Mới'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    onChanged: (value) => name = value,
-                    decoration: const InputDecoration(labelText: 'Tên (Ví dụ: Thịt bò)'),
-                  ),
-                  TextField(
-                    onChanged: (value) => quantity = value,
-                    decoration: const InputDecoration(labelText: 'Số lượng (Ví dụ: 200g)'),
-                  ),
-                  // Lựa chọn HSD cần phức tạp hơn (dùng DatePicker)
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Hủy'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (name.isNotEmpty && quantity.isNotEmpty) {
-                    // Giả định category là "Khác" nếu không có trường nhập
-                    final newIng = Ingredient(
-                      name: name,
-                      quantity: quantity,
-                      expiryDate: expiryDate,
-                      category: 'Thực phẩm mới',
-                    );
-                    provider.addIngredient(newIng); // Gọi Provider để thêm
-                    Navigator.pop(ctx);
-                  }
-                },
-                child: const Text('Thêm'),
-              ),
-            ],
-          );
-        }
-    );
+  // Các hàm bổ trợ khác
+  Map<String, List<Ingredient>> _groupIngredientsByCategory(List<Ingredient> items) {
+    Map<String, List<Ingredient>> map = {};
+    for (var item in items) {
+      map.putIfAbsent(item.category, () => []).add(item);
+    }
+    return map;
   }
+
+  List<Widget> _buildIngredientList(BuildContext context, Map<String, List<Ingredient>> groups, PantryProvider provider) {
+    return groups.entries.map((entry) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(entry.key, style: const TextStyle(fontSize: 18, color: Colors.green, fontWeight: FontWeight.bold)),
+        ),
+        ...entry.value.map((item) => Card(
+          child: ListTile(
+            title: Text(item.name),
+            subtitle: Text('HSD: ${item.expiryDate.day}/${item.expiryDate.month}'),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => provider.removeIngredient(item),
+            ),
+          ),
+        )).toList(),
+      ],
+    )).toList();
+  }
+
+  Widget _buildEmptyState() => const Center(child: Text('Kho trống rỗng!'));
 }

@@ -1,7 +1,11 @@
-// dang ki dang nhap
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+// --- IMPORT TUYỆT ĐỐI ---
 import 'package:bepthongminh64pm1duchoang/features/auth/domain/auth_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/pantry/domain/pantry_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/alerts/domain/alerts_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/alerts/domain/alert_model.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -20,6 +24,49 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+  }
+
+  // --- HÀM HIỂN THỊ POPUP CẢNH BÁO ---
+  void _showExpiryDialogIfNeeded(BuildContext context) {
+    final alertsProvider = Provider.of<AlertsProvider>(context, listen: false);
+    final pantryProvider = Provider.of<PantryProvider>(context, listen: false);
+
+    // Quét kho thực phẩm
+    alertsProvider.checkExpirations(pantryProvider.ingredients);
+
+    // Kiểm tra nếu có đồ hết hạn (Critical)
+    if (alertsProvider.alerts.any((a) => a.severity == AlertSeverity.critical)) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, // Bắt buộc người dùng phải tương tác
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Cảnh báo hết hạn!'),
+            ],
+          ),
+          content: Text(
+              'Phát hiện thực phẩm trong kho của bạn đã hết hạn. Hãy kiểm tra ngay để đảm bảo sức khỏe!'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('ĐỂ SAU'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Sau này bạn có thể thêm logic chuyển tab tại đây
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('KIỂM TRA NGAY', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -91,8 +138,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               onPressed: () async {
                 final success = await Provider.of<AuthProvider>(context, listen: false)
                     .login(_emailController.text, _passController.text);
-                if (!success && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!')));
+
+                if (success && mounted) {
+                  // ĐĂNG NHẬP THÀNH CÔNG: Hiện popup cảnh báo trước khi vào App
+                  _showExpiryDialogIfNeeded(context);
+                } else if (!success && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!'))
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
@@ -119,8 +172,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: () => Provider.of<AuthProvider>(context, listen: false)
-                  .register(_nameController.text, _emailController.text, _passController.text),
+              onPressed: () async {
+                await Provider.of<AuthProvider>(context, listen: false)
+                    .register(_nameController.text, _emailController.text, _passController.text);
+
+                if (mounted) {
+                  _showExpiryDialogIfNeeded(context);
+                }
+              },
               style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
               child: const Text('TẠO TÀI KHOẢN', style: TextStyle(color: Colors.white)),
             ),

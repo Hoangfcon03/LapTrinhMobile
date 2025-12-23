@@ -16,6 +16,10 @@ import 'package:bepthongminh64pm1duchoang/features/auth/presentation/screens/aut
 
 import 'package:bepthongminh64pm1duchoang/features/profile/presentation/screens/profile_screen.dart';
 
+// Thêm import cho module Alerts
+import 'package:bepthongminh64pm1duchoang/features/alerts/domain/alerts_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/alerts/domain/alert_model.dart';
+
 void main() {
   runApp(
     MultiProvider(
@@ -25,6 +29,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => PantryProvider()),
         ChangeNotifierProvider(create: (_) => RecipeProvider()),
         ChangeNotifierProvider(create: (_) => PlannerProvider()),
+        ChangeNotifierProvider(create: (_) => AlertsProvider()),
       ],
       child: const KitchenAssistantApp(),
     ),
@@ -119,6 +124,46 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
+      ),
+    );
+  }
+}
+void _showExpiryDialogIfNeeded(BuildContext context) {
+  final alertsProvider = Provider.of<AlertsProvider>(context, listen: false);
+  final pantryProvider = Provider.of<PantryProvider>(context, listen: false);
+
+  // 1. Quét kho để cập nhật danh sách cảnh báo mới nhất
+  alertsProvider.checkExpirations(pantryProvider.ingredients);
+
+  // 2. Nếu có thực phẩm hết hạn (Critical), hiển thị Popup
+  if (alertsProvider.alerts.any((a) => a.severity == AlertSeverity.critical)) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 10),
+            Text('Cảnh báo hết hạn!'),
+          ],
+        ),
+        content: Text(
+            'Bạn có ${alertsProvider.alerts.where((a) => a.severity == AlertSeverity.critical).length} thực phẩm đã hết hạn trong kho. Hãy kiểm tra ngay!'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ĐỂ SAU'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Chuyển hướng người dùng đến tab Kho hoặc màn hình Cảnh báo
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('KIỂM TRA', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
