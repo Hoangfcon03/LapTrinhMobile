@@ -9,52 +9,27 @@ class AlertsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Danh sách Cảnh báo'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: const Text('Cảnh báo thực phẩm')),
       body: Consumer<PantryProvider>(
-        builder: (context, pantry, child) {
+        builder: (context, pantry, _) {
           final expired = pantry.expiredIngredients;
           final soon = pantry.expiringSoonIngredients;
 
           if (expired.isEmpty && soon.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle_outline, size: 80, color: Colors.green),
-                  SizedBox(height: 16),
-                  Text('Tất cả thực phẩm đều an toàn!', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                ],
-              ),
-            );
+            return const Center(child: Text('Mọi thứ đều ổn!'));
           }
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // MỤC 1: ĐÃ HẾT HẠN
               if (expired.isNotEmpty) ...[
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text("❌ ĐÃ HẾT HẠN (CẦN LOẠI BỎ)",
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 14)),
-                ),
-                ...expired.map((item) => _buildAlertCard(context, item, Colors.red, true)),
-                const SizedBox(height: 20),
+                const Text("❌ HẾT HẠN", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                ...expired.map((i) => _buildCard(context, i, Colors.red)),
               ],
-
-              // MỤC 2: SẮP HẾT HẠN
               if (soon.isNotEmpty) ...[
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text("⚠️ SẮP HẾT HẠN (ƯU TIÊN SỬ DỤNG)",
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 14)),
-                ),
-                ...soon.map((item) => _buildAlertCard(context, item, Colors.orange, false)),
+                const SizedBox(height: 20),
+                const Text("⚠️ SẮP HẾT HẠN", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                ...soon.map((i) => _buildCard(context, i, Colors.orange)),
               ],
             ],
           );
@@ -63,30 +38,16 @@ class AlertsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAlertCard(BuildContext context, Ingredient item, Color color, bool isExpired) {
+  Widget _buildCard(BuildContext context, Ingredient item, Color color) {
     return Card(
-      elevation: 0,
-      color: color.withOpacity(0.05),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withOpacity(0.3)),
-      ),
-      margin: const EdgeInsets.only(bottom: 10),
+      color: color.withAlpha(20),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color,
-          child: const Icon(Icons.priority_high, color: Colors.white, size: 20),
-        ),
         title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('HSD: ${item.expiryDate.day}/${item.expiryDate.month}/${item.expiryDate.year}'),
-        trailing: isExpired
-            ? IconButton(
+        subtitle: Text('HSD: ${item.expiryDate.day}/${item.expiryDate.month}'),
+        trailing: IconButton(
           icon: const Icon(Icons.delete_outline, color: Colors.red),
-          onPressed: () {
-            Provider.of<PantryProvider>(context, listen: false).removeIngredient(item.id);
-          },
-        )
-            : const Icon(Icons.chevron_right, color: Colors.grey),
+          onPressed: () => Provider.of<PantryProvider>(context, listen: false).removeIngredient(item.id),
+        ),
       ),
     );
   }

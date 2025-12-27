@@ -28,9 +28,12 @@ class Ingredient {
 class Recipe {
   final String id;
   final String title;
-  final List<String> ingredients;
+  final List<String> ingredients;// Danh sách tên nguyên liệu cần
   final List<String> steps;
   final String imageUrl;
+  final int cookTime;      // FR2.3: Thời gian nấu (phút)
+  final String mealType;   // FR2.3: Loại bữa (Sáng, Trưa, Tối)
+  final String cuisine;    // FR2.3: Ẩm thực (Á, Âu, Chay)
 
   Recipe({
     required this.id,
@@ -38,5 +41,8 @@ class Recipe {
     required this.ingredients,
     required this.steps,
     required this.imageUrl,
+    required this.cookTime,
+    required this.mealType,
+    required this.cuisine,
   });
 }
