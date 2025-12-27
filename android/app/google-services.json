@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1065007702272",
+    "project_id": "bep-thong-minh-hoang",
+    "storage_bucket": "bep-thong-minh-hoang.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1065007702272:android:d92b7347139d45c45f13e5",
+        "android_client_info": {
+          "package_name": "com.example.bepthongminh64pm1duchoang"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4ZSPsUqkok1_FbUu8U64NYwpoDo4dnj8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

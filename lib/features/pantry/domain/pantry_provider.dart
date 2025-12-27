@@ -1,40 +1,80 @@
 import 'package:flutter/material.dart';
-// Lỗi này đã được giải quyết sau khi bạn tạo file
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../data/pantry_data.dart';
-export '../data/pantry_data.dart' show Ingredient;
-// Lỗi này cũng tự động biến mất vì Ingredient và mockIngredients
-// đã được định nghĩa trong pantry_data.dart
 
 class PantryProvider with ChangeNotifier {
-  // Khởi tạo với dữ liệu giả đã import
-  List<Ingredient> _ingredients = mockIngredients;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<Ingredient> _ingredients = [];
 
   List<Ingredient> get ingredients => _ingredients;
 
-  // Logic thêm nguyên liệu (FR1.1)
-  void addIngredient(Ingredient ingredient) {
-    _ingredients.add(ingredient);
+  // Lấy đồ sắp hết hạn để hiện cảnh báo
+  List<Ingredient> get expiringIngredients =>
+      _ingredients.where((item) => item.isExpiringSoon || item.isExpired).toList();
+
+  // Tải dữ liệu từ Firestore
+  Future<void> fetchIngredients() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('ingredients')
+        .orderBy('expiryDate')
+        .get();
+
+    _ingredients = snapshot.docs.map((doc) {
+      final data = doc.data();
+      return Ingredient(
+        id: doc.id,
+        name: data['name'] ?? '',
+        quantity: data['quantity'] ?? '',
+        expiryDate: (data['expiryDate'] as Timestamp).toDate(),
+        category: data['category'] ?? 'Khác',
+      );
+    }).toList();
     notifyListeners();
   }
 
-  // Logic dùng hết/xóa nguyên liệu (FR1.3)
-  void removeIngredient(Ingredient ingredient) {
-    _ingredients.remove(ingredient);
+  // Thêm mới lên Firebase
+  Future<void> addIngredient(Ingredient item) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final docRef = await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('ingredients')
+        .add({
+      'name': item.name,
+      'quantity': item.quantity,
+      'expiryDate': Timestamp.fromDate(item.expiryDate),
+      'category': item.category,
+    });
+
+    _ingredients.add(Ingredient(
+      id: docRef.id, name: item.name, quantity: item.quantity,
+      expiryDate: item.expiryDate, category: item.category,
+    ));
+    _ingredients.sort((a, b) => a.expiryDate.compareTo(b.expiryDate));
     notifyListeners();
   }
 
-  // Logic cập nhật số lượng/HSD (FR1.2)
-  void updateIngredient(Ingredient oldIng, Ingredient newIng) {
-    final index = _ingredients.indexOf(oldIng);
-    if (index != -1) {
-      _ingredients[index] = newIng;
-      notifyListeners();
-    }
-  }
+  // Xóa khỏi Firebase
+  Future<void> removeIngredient(String id) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  // --- Logic Cảnh báo Hết hạn (FR3) ---
-  // Sử dụng thuộc tính isExpiringSoon đã định nghĩa trong class Ingredient
-  List<Ingredient> get expiringIngredients {
-    return _ingredients.where((i) => i.isExpiringSoon).toList();
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('ingredients')
+        .doc(id)
+        .delete();
+
+    _ingredients.removeWhere((i) => i.id == id);
+    notifyListeners();
   }
 }

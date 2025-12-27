@@ -1,29 +1,19 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bepthongminh64pm1duchoang/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const KitchenAssistantApp());
+  testWidgets('Kiểm tra giao diện đăng nhập khi mới mở app', (WidgetTester tester) async {
+    // 1. Khởi chạy ứng dụng (Sử dụng đúng tên class trong main.dart của bạn)
+    // Ở đây là MultiProviderWrapper vì nó chứa các Provider cần thiết
+    await tester.pumpWidget(const MultiProviderWrapper());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // 2. Vì app có Firebase và Provider, chúng ta đợi một chút để các frame ổn định
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // 3. Kiểm tra xem có chữ 'ĐĂNG NHẬP' (đặc trưng của AuthScreen) hay không
+    // Thay vì kiểm tra counter (không tồn tại), ta kiểm tra giao diện thực tế
+    expect(find.text('ĐĂNG NHẬP'), findsWidgets);
+    expect(find.byIcon(Icons.restaurant_menu), findsOneWidget);
   });
 }

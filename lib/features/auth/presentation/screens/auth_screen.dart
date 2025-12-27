@@ -38,7 +38,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     if (alertsProvider.alerts.any((a) => a.severity == AlertSeverity.critical)) {
       showDialog(
         context: context,
-        barrierDismissible: false, // Bắt buộc người dùng phải tương tác
+        barrierDismissible: false,
         builder: (context) => AlertDialog(
           title: const Row(
             children: [
@@ -47,7 +47,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               Text('Cảnh báo hết hạn!'),
             ],
           ),
-          content: Text(
+          content: const Text(
               'Phát hiện thực phẩm trong kho của bạn đã hết hạn. Hãy kiểm tra ngay để đảm bảo sức khỏe!'
           ),
           actions: [
@@ -58,7 +58,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Sau này bạn có thể thêm logic chuyển tab tại đây
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text('KIỂM TRA NGAY', style: TextStyle(color: Colors.white)),
@@ -136,15 +135,15 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             height: 50,
             child: ElevatedButton(
               onPressed: () async {
-                final success = await Provider.of<AuthProvider>(context, listen: false)
+                // SỬA LỖI: login trả về String?, null nghĩa là thành công
+                final String? error = await Provider.of<AuthProvider>(context, listen: false)
                     .login(_emailController.text, _passController.text);
 
-                if (success && mounted) {
-                  // ĐĂNG NHẬP THÀNH CÔNG: Hiện popup cảnh báo trước khi vào App
+                if (error == null && mounted) {
                   _showExpiryDialogIfNeeded(context);
-                } else if (!success && mounted) {
+                } else if (error != null && mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!'))
+                      SnackBar(content: Text(error))
                   );
                 }
               },
@@ -173,11 +172,16 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             height: 50,
             child: ElevatedButton(
               onPressed: () async {
-                await Provider.of<AuthProvider>(context, listen: false)
-                    .register(_nameController.text, _emailController.text, _passController.text);
+                // SỬA LỖI: register trả về String?
+                final String? error = await Provider.of<AuthProvider>(context, listen: false)
+                    .register(_emailController.text, _passController.text, _nameController.text);
 
-                if (mounted) {
+                if (error == null && mounted) {
                   _showExpiryDialogIfNeeded(context);
+                } else if (error != null && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(error))
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
@@ -187,5 +191,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passController.dispose();
+    _nameController.dispose();
+    _tabController.dispose();
+    super.dispose();
   }
 }

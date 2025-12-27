@@ -9,7 +9,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Lấy thông tin user từ AuthProvider
     final auth = Provider.of<AuthProvider>(context);
-    final user = auth.user;
+    final user = auth.user; // Đây là đối tượng User của Firebase
 
     return Scaffold(
       appBar: AppBar(
@@ -19,7 +19,6 @@ class ProfileScreen extends StatelessWidget {
       body: Column(
         children: [
           const SizedBox(height: 30),
-          // Ảnh đại diện giả lập
           const Center(
             child: CircleAvatar(
               radius: 50,
@@ -28,8 +27,9 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
+          // SỬA LỖI: Firebase User dùng displayName thay vì name
           Text(
-            user?.name ?? 'Khách',
+            user?.displayName ?? 'Khách',
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           Text(
@@ -39,14 +39,12 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 30),
           const Divider(),
 
-          // Danh sách các tùy chọn
           _buildOptionItem(Icons.history, 'Lịch sử nấu ăn', () {}),
           _buildOptionItem(Icons.settings, 'Cài đặt thông báo', () {}),
           _buildOptionItem(Icons.help_outline, 'Hướng dẫn sử dụng', () {}),
 
           const Spacer(),
 
-          // NÚT ĐĂNG XUẤT
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: SizedBox(
@@ -54,7 +52,6 @@ class ProfileScreen extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () {
                   auth.logout();
-                  // Sau khi logout, main.dart sẽ tự động đưa người dùng về AuthScreen
                 },
                 icon: const Icon(Icons.logout, color: Colors.red),
                 label: const Text('ĐĂNG XUẤT', style: TextStyle(color: Colors.red)),

@@ -1,47 +1,54 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:bepthongminh64pm1duchoang/features/auth/domain/user_model.dart';
 
 class AuthProvider with ChangeNotifier {
-  UserModel? _user;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  User? _user;
   bool _isLoading = false;
 
-  UserModel? get user => _user;
-  bool get isLoading => _isLoading;
-  bool get isLoggedIn => _user != null;
-
-  // Giả lập Đăng nhập
-  Future<bool> login(String email, String password) async {
-    _isLoading = true;
-    notifyListeners();
-
-    // Giả lập delay API 1.5 giây
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    if (email.isNotEmpty && password.length >= 6) {
-      _user = UserModel(id: '1', email: email, name: 'Người dùng Bếp');
-      _isLoading = false;
+  AuthProvider() {
+    // Lắng nghe trạng thái đăng nhập thay đổi (Session)
+    _auth.authStateChanges().listen((user) {
+      _user = user;
       notifyListeners();
-      return true;
-    }
-
-    _isLoading = false;
-    notifyListeners();
-    return false;
+    });
   }
 
-  // Đăng ký
-  Future<void> register(String name, String email, String password) async {
+  User? get user => _user;
+  bool get isLoggedIn => _user != null;
+  bool get isLoading => _isLoading;
+
+  // Đăng ký tài khoản mới
+  Future<String?> register(String email, String password, String name) async {
     _isLoading = true;
     notifyListeners();
-    await Future.delayed(const Duration(seconds: 2));
-    _user = UserModel(id: '2', email: email, name: name);
-    _isLoading = false;
+    try {
+      UserCredential result = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      await result.user?.updateDisplayName(name);
+      _isLoading = false;
+      return null; // Thành công
+    } catch (e) {
+      _isLoading = false;
+      return e.toString();
+    }
+  }
+
+  // Đăng nhập
+  Future<String?> login(String email, String password) async {
+    _isLoading = true;
     notifyListeners();
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      _isLoading = false;
+      return null;
+    } catch (e) {
+      _isLoading = false;
+      return e.toString();
+    }
   }
 
   // Đăng xuất
-  void logout() {
-    _user = null;
-    notifyListeners();
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 }
