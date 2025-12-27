@@ -1,43 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:bepthongminh64pm1duchoang/features/recipe/domain/recipe_model.dart';
-import 'package:bepthongminh64pm1duchoang/features/planner/domain/planner_model.dart';
 
 class PlannerProvider with ChangeNotifier {
-  final List<MealPlan> _mealPlans = [];
+  // Lưu trữ dưới dạng: { "2024-05-20": [Recipe1, Recipe2] }
+  final Map<String, List<dynamic>> _plan = {};
 
-  List<MealPlan> get mealPlans => _mealPlans;
+  Map<String, List<dynamic>> get plan => _plan;
 
-  void addRecipeToPlan(DateTime date, Recipe recipe) {
-    // Chuẩn hóa chỉ lấy ngày/tháng/năm để tránh lệch giờ
-    final dateOnly = DateTime(date.year, date.month, date.day);
-
-    final existingPlanIndex = _mealPlans.indexWhere(
-            (plan) => plan.date.year == dateOnly.year &&
-            plan.date.month == dateOnly.month &&
-            plan.date.day == dateOnly.day
-    );
-
-    if (existingPlanIndex != -1) {
-      // Nếu ngày này đã có trong lịch, thêm món mới vào list
-      _mealPlans[existingPlanIndex].recipes.add(recipe);
-    } else {
-      // Nếu chưa có, tạo mới một MealPlan cho ngày đó
-      _mealPlans.add(MealPlan(date: dateOnly, recipes: [recipe]));
+  void addToPlan(DateTime date, dynamic recipe) {
+    String dateStr = "${date.year}-${date.month}-${date.day}";
+    if (_plan[dateStr] == null) {
+      _plan[dateStr] = [];
     }
-
-    // Sắp xếp lịch trình theo thời gian tăng dần
-    _mealPlans.sort((a, b) => a.date.compareTo(b.date));
-
-    notifyListeners(); // Bắt buộc để cập nhật giao diện
+    _plan[dateStr]!.add(recipe);
+    notifyListeners();
   }
 
-  List<String> get shoppingList {
-    final List<String> items = [];
-    for (var plan in _mealPlans) {
-      for (var recipe in plan.recipes) {
-        items.addAll(recipe.missingIngredients);
-      }
-    }
-    return items.toSet().toList();
+  void removeFromPlan(DateTime date, String recipeId) {
+    String dateStr = "${date.year}-${date.month}-${date.day}";
+    _plan[dateStr]?.removeWhere((r) => r.id == recipeId);
+    notifyListeners();
   }
 }
