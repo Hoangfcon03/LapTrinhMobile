@@ -1,78 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bepthongminh64pm1duchoang/features/auth/domain/auth_provider.dart';
+import 'package:bepthongminh64pm1duchoang/features/pantry/domain/pantry_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Lấy thông tin user từ AuthProvider
     final auth = Provider.of<AuthProvider>(context);
-    final user = auth.user; // Đây là đối tượng User của Firebase
+    final pantry = Provider.of<PantryProvider>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hồ sơ cá nhân'),
-        centerTitle: true,
-      ),
-      body: Column(
+      appBar: AppBar(title: const Text('Cài đặt hệ thống')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          const SizedBox(height: 30),
-          const Center(
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.green,
-              child: Icon(Icons.person, size: 60, color: Colors.white),
+          // NÚT QUAN TRỌNG NHẤT: SINH DỮ LIỆU
+          Card(
+            color: Colors.blue.shade50,
+            child: ListTile(
+              leading: const Icon(Icons.storage, color: Colors.blue),
+              title: const Text('Khởi tạo dữ liệu App', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Nhấn để tạo sẵn Kho thực phẩm và Công thức mẫu'),
+              onTap: () async {
+                await pantry.seedFullAppData();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Dữ liệu đã được nạp hoàn tất!'))
+                  );
+                }
+              },
             ),
           ),
-          const SizedBox(height: 15),
-          // SỬA LỖI: Firebase User dùng displayName thay vì name
-          Text(
-            user?.displayName ?? 'Khách',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            user?.email ?? 'Chưa cập nhật email',
-            style: const TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 30),
-          const Divider(),
-
-          _buildOptionItem(Icons.history, 'Lịch sử nấu ăn', () {}),
-          _buildOptionItem(Icons.settings, 'Cài đặt thông báo', () {}),
-          _buildOptionItem(Icons.help_outline, 'Hướng dẫn sử dụng', () {}),
-
-          const Spacer(),
-
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  auth.logout();
-                },
-                icon: const Icon(Icons.logout, color: Colors.red),
-                label: const Text('ĐĂNG XUẤT', style: TextStyle(color: Colors.red)),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () => auth.logout(),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('ĐĂNG XUẤT', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildOptionItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
     );
   }
 }

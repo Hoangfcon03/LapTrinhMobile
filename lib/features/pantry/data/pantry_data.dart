@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Ingredient {
   final String id;
   final String name;
@@ -13,12 +15,28 @@ class Ingredient {
     required this.category,
   });
 
-  // Logic FR3: Kiểm tra sắp hết hạn (trong 3 ngày)
-  bool get isExpiringSoon {
-    final diff = expiryDate.difference(DateTime.now()).inDays;
-    return diff >= 0 && diff <= 3;
-  }
-
-  // Kiểm tra đã hết hạn hoàn toàn
+  // FR3: Logic kiểm tra trạng thái hạn sử dụng
   bool get isExpired => expiryDate.isBefore(DateTime.now());
+
+  bool get isExpiringSoon {
+    final now = DateTime.now();
+    final threeDaysFromNow = now.add(const Duration(days: 3));
+    return expiryDate.isAfter(now) && expiryDate.isBefore(threeDaysFromNow);
+  }
+}
+
+class Recipe {
+  final String id;
+  final String title;
+  final List<String> ingredients;
+  final List<String> steps;
+  final String imageUrl;
+
+  Recipe({
+    required this.id,
+    required this.title,
+    required this.ingredients,
+    required this.steps,
+    required this.imageUrl,
+  });
 }

@@ -1,13 +1,11 @@
-enum AlertSeverity { warning, critical }
+enum AlertSeverity { info, warning, critical }
 
-class ExpiryAlert {
-  final String ingredientId;
+class AlertModel {
   final String ingredientName;
   final DateTime expiryDate;
   final AlertSeverity severity;
 
-  ExpiryAlert({
-    required this.ingredientId,
+  AlertModel({
     required this.ingredientName,
     required this.expiryDate,
     required this.severity,
