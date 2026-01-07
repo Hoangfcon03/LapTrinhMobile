@@ -59,6 +59,38 @@ class PantryProvider with ChangeNotifier {
     _ingredients.removeWhere((i) => i.id == id);
     notifyListeners();
   }
+  Future<void> clearAllData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final batch = _firestore.batch();
+
+    // 1. Lấy tất cả nguyên liệu của user và đưa vào batch để xóa
+    final pantrySnapshot = await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('ingredients')
+        .get();
+
+    for (var doc in pantrySnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 2. Xóa các công thức (Recipes)
+    // Lưu ý: Nếu collection recipes là chung cho mọi người, bạn có thể cân nhắc
+    // chỉ xóa nếu bạn là Admin, hoặc xóa sạch để nạp lại bản mới.
+    final recipeSnapshot = await _firestore.collection('recipes').get();
+    for (var doc in recipeSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // Thực thi xóa sạch trên server
+    await batch.commit();
+
+    // 3. Cập nhật giao diện cục bộ
+    _ingredients.clear();
+    notifyListeners();
+  }
 
   // 4. CẬP NHẬT SỐ LƯỢNG
   Future<void> updateQuantity(String id, String newQty) async {
