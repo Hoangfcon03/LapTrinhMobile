@@ -6,6 +6,7 @@ class Ingredient {
   final String quantity;
   final DateTime expiryDate;
   final String category;
+  final String imageUrl;
 
   Ingredient({
     required this.id,
@@ -13,6 +14,7 @@ class Ingredient {
     required this.quantity,
     required this.expiryDate,
     required this.category,
+    this.imageUrl = "",
   });
 
   // FR3: Logic kiểm tra trạng thái hạn sử dụng
